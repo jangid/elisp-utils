@@ -3,11 +3,35 @@
 ;;; Code:
 
 (require 'org)
+(require 'subr-x)
+
+(defun enet-table-names ()
+  "Return names of tables in the current buffer."
+  (let (names)
+    (org-table-map-tables
+     (lambda ()
+       (when-let ((name (org-element-property
+                         :name (org-element-at-point))))
+         (push name names)))
+     'quiet)
+    (nreverse names)))
+
+(defun enet-table-at-point ()
+  "Return the name of table at point."
+  (and (org-at-table-p)
+       (save-excursion
+         (goto-char (org-table-begin))
+         (org-element-property :name (org-element-at-point)))))
 
 (defun enet-export (name)
   "Search for table named `NAME` and export.
 ARG changes behaviour."
-  (interactive "MTable Name: ")
+  (interactive (list (completing-read
+                      "Table Name: "
+                      (enet-table-names)
+                      nil
+                      t
+                      (enet-table-at-point))))
   (outline-show-all)
   (let ((case-fold-search t))
     (goto-char (point-min))
